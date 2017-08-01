@@ -1,0 +1,237 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+        * {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            border: 0;
+        }
+
+        .all {
+            width: 500px;
+            height: 200px;
+            padding: 7px;
+            border: 1px solid #ccc;
+            margin: 100px auto;
+            position: relative;
+        }
+
+        .screen {
+            width: 500px;
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .screen li {
+            width: 500px;
+            height: 200px;
+            overflow: hidden;
+            float: left;
+        }
+
+        .screen ul {
+            position: absolute;
+            left: 0;
+            top: 0px;
+            width: 3000px;
+        }
+
+        .all ol {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        .all ol li {
+            float: left;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 1px solid #ccc;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        .all ol li.current {
+            background: #DB192A;
+        }
+
+        #arr {
+            display: none;
+        }
+
+        #arr span {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            margin-top: -20px;
+            background: #000;
+            cursor: pointer;
+            line-height: 40px;
+            text-align: center;
+            font-weight: bold;
+            font-family: '黑体';
+            font-size: 30px;
+            color: #fff;
+            opacity: 0.3;
+            border: 1px solid #fff;
+        }
+
+        #arr #right {
+            right: 5px;
+            left: auto;
+        }
+    </style>
+</head>
+<body>
+<div class="all" id='box'>
+    <div class="screen">
+        <ul>
+            <li><img src="images/1.jpg" width="500" height="200"/></li>
+            <li><img src="images/2.jpg" width="500" height="200"/></li>
+            <li><img src="images/3.jpg" width="500" height="200"/></li>
+            <li><img src="images/4.jpg" width="500" height="200"/></li>
+            <li><img src="images/5.jpg" width="500" height="200"/></li>
+        </ul>
+        <ol>
+        </ol>
+    </div>
+    <div id="arr"><span id="left">&lt;</span><span id="right">&gt;</span></div>
+</div>
+<script src="common.js"></script>
+<script>
+
+    //动画函数
+    function animate(element, target) {
+        clearInterval(element.setId);
+        element.setId = setInterval(function () {
+            //获取元素的当前的位置
+            var current = element.offsetLeft;//数字类型的
+            //每次移动的步数
+            var step = 15;
+            step = current < target ? step : -step;
+            //设置当前位置的值
+            current += step;
+            if (Math.abs(current - target) > Math.abs(step)) {
+                element.style.left = current + "px";
+            } else {
+                element.style.left = target + "px";
+                //到达目标,清理计时器
+                clearInterval(element.setId);
+            }
+        }, 20);
+    }
+
+
+    //先获取需要的元素
+
+    //获取最外面的div
+    var box = my$("box");
+    //获取相框的div
+    var screen = box.children[0];
+    //获取相框的宽度
+    var imgWidth = screen.offsetWidth;
+    //获取ul
+    var ulObj = screen.children[0];
+    //获取ul中所有的li标签对象
+    var liObjs = ulObj.children;
+    //获取ol
+    var olObj = screen.children[1];
+    //获取显示左右焦点按钮的div
+    var arr = my$("arr");
+    //左按钮
+    var left = my$("left");
+    //右按钮
+    var right = my$("right");
+    var pic = 0;
+    //根据ul中li标签的个数创建li加入到ol中
+    for (var i = 0; i < liObjs.length; i++) {
+        var li = document.createElement("li");
+        //加入到ol中
+        olObj.appendChild(li);
+        //设置li标签中显示的文字内容
+        li.innerHTML = (i + 1);
+        //为每个li标签添加一个自定义属性存储索引值
+        li.setAttribute("index", i);
+        //注册鼠标进入的事件
+        li.onmouseover = function () {
+            //排他功能----最好不要再使用ul中li了,最好使用的是ol中li
+            for (var j = 0; j < olObj.children.length; j++) {
+                olObj.children[j].removeAttribute("class");
+            }
+            this.className = "current";
+            pic = this.getAttribute("index");//坑
+            animate(ulObj, -pic * imgWidth);
+        };
+    }
+    //设置ol中第一个li标签有默认的背景颜色
+    olObj.children[0].className = "current";
+
+    //再次添加一个li标签加入到ul中
+    ulObj.appendChild(ulObj.children[0].cloneNode(true));
+
+
+    //自动播放的代码
+    var timeId=setInterval(rightClickHandle,1000);//========================
+    //为最外面的div注册鼠标进入和离开的事件
+    box.onmouseover = function () {
+        //焦点的div显示
+        arr.style.display = "block";
+        clearInterval(timeId);//===========================停止的代码
+    };
+    box.onmouseout = function () {
+        //焦点的div隐藏
+        arr.style.display = "none";
+        timeId=setInterval(rightClickHandle,1000);//========继续移动的代码
+    };
+
+    right.onclick =rightClickHandle;
+    function rightClickHandle() {
+        if(pic==ulObj.children.length-1){//====5
+            pic=0;
+            ulObj.style.left=-pic*imgWidth+"px";
+        }
+        pic++;
+        animate(ulObj, -pic * imgWidth);
+        //设置样式
+        // //排他功能----先把所有的ol中的li样式全部干掉
+        // for(var i=0;i<olObj.children.length;i++){
+        //     olObj.children[i].removeAttribute("class");
+        // }
+        // if(pic==ulObj.children.length-1){
+        //     //如果pic的值是5就应该让第一个按钮显示背景样式
+        //     olObj.children[0].className="current";
+        // }else{
+        //     //正常的情况就应该是对应的ol中li显示背景样式
+        //     olObj.children[pic].className="current";
+        // }
+    }
+    left.onclick=function () {
+        if(pic==0){
+            pic=ulObj.children.length-1;
+            ulObj.style.left=-pic*imgWidth+"px";
+        }
+        pic--;
+        animate(ulObj, -pic * imgWidth);
+        for(var i=0;i<olObj.children.length;i++){
+            olObj.children[i].removeAttribute("class");
+        }
+        olObj.children[pic].className="current";
+    };
+
+
+
+
+</script>
+
+</body>
+</html>
